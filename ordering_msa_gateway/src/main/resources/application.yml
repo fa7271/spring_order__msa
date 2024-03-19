@@ -1,0 +1,41 @@
+server:
+  port: 8080
+spring:
+  # eureka 서버에 아래 name으로 서비스 명을 등록.
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      routes:
+        - id: item-service
+#          /item-service로 시작되는 url요청이 들어올 경우
+          predicates:
+            - Path=/item-service/**
+#          filters에 StripPrefix =1 은 첫 번째 접두어 제거
+          filters:
+            - StripPrefix=1
+          #          lb://eureka에 등록된 서비스 명
+          #          uri://loca... 로 선언하면 로드밸런싱이 아니라 직접 연결하는것이다.
+          uri: lb://item-service
+        - id: member-service
+          predicates:
+            - Path=/member-service/**
+          filters:
+            - StripPrefix=1
+          uri: lb://member-service
+        - id: order-service
+          predicates:
+            - Path=/order-service/**
+          filters:
+            - StripPrefix=1
+          uri: lb://order-service
+eureka:
+  client:
+    servieUrl:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    hostname: localhost
+jwt:
+  expiration: 30 # 30?
+  secretKey: mysecret # ??? ?
