@@ -1,4 +1,4 @@
-package com.example.ordering.order.domain;
+package com.example.ordering.order.dto;
 
 import lombok.Data;
 import lombok.Getter;
