@@ -19,7 +19,7 @@ import java.util.List;
 
 @Component
 public class JwtGlobalFilter implements GlobalFilter {
-    @Value("${jwt.secretKey}")z
+    @Value("${jwt.secretKey}")
     private String secretKey;
 
     private final List<String> allowUrl = Arrays.asList("/member/create", "/doLogin", "/items", "/item/*/image");

@@ -29,45 +29,45 @@ public class OrderService {
 
     private final String MEMBER_API = "http://member-service/";
     private final String ITEM_API = "http://item-service/";
-
     public Ordering create(List<OrderReqDto> orderReqDtos, String email) {
-        String url = MEMBER_API + "member/findByEmail?email="+email;
-        MemberDto members = restTemplate.getForObject(url, MemberDto.class);
-        Ordering ordering = Ordering.builder().memberId(members.getId()).build();
-        List<ItemQupdateDto> itemQuantityUpdateDtos = new ArrayList<>();
-//        Ordering 객체가 생성될 때 OrderingItem 객체도 함께 생성 : cascading
-        for (OrderReqDto dto : orderReqDtos) {
-            OrderItem orderItem = OrderItem
-                    .builder()
-                    .quantity(dto.getCount())
-                    .itemId(dto.getItemId())
+        String url = MEMBER_API + "/member/findByEmail?email=" + email;
+        MemberDto member = restTemplate.getForObject(url, MemberDto.class);
+        Ordering ordering = Ordering.builder().memberId(member.getId()).build();
+        List<ItemQuantityUpdateDto> itemQuantityUpdateDtos = new ArrayList<>();
+//        Ordering 객체가 생성될 때 OrderingItem객체도 함께 생성 : cascading
+        for(OrderReqDto dto : orderReqDtos) {
+            OrderItem orderItem = OrderItem.builder()
                     .ordering(ordering)
+                    .itemId(dto.getItemId())
+                    .quantity(dto.getCount())
                     .build();
             ordering.getOrderItems().add(orderItem);
-            String itemUrl = ITEM_API + "items/"+dto.getItemId();
-            ResponseEntity<ItemDto> itemResponseEntity = restTemplate.getForEntity(itemUrl, ItemDto.class);
-            if (itemResponseEntity.getBody().getStockQuantity() - dto.getCount() < 0) {
-                throw new IllegalArgumentException("out of stock!");
+            String itemUrl = ITEM_API + "/item/" + dto.getItemId();
+            // getForEntity는 ResponseEntity로 반환
+            ResponseEntity<ItemDto> itemResponseEntity =  restTemplate.getForEntity(itemUrl, ItemDto.class);
+            // getBody()로 ResponseEntity안의 ItemDto를 꺼냄
+            if(itemResponseEntity.getBody().getStockQuantity() - dto.getCount() < 0) {
+                throw new IllegalArgumentException("재고가 부족합니다.");
             }
             int newQuantity = itemResponseEntity.getBody().getStockQuantity() - dto.getCount();
-            ItemQupdateDto updateDto = new ItemQupdateDto();
+
+            ItemQuantityUpdateDto updateDto = new ItemQuantityUpdateDto();
             updateDto.setId(dto.getItemId());
             updateDto.setStockQuantity(newQuantity);
             itemQuantityUpdateDtos.add(updateDto);
+
         }
-        Ordering ordering1 = orderRepository.save(ordering);
-//        orderRepository.save를 먼자 함으로서 위의 코드에서 에러 발생시 item서비스 호출하지 않으므로,
-//        트랜잭션 문제 발생하지 않음.
-        String itemPatchUrl = ITEM_API + "item/updateQuantity";
+        Ordering ordering1 = orderRepository.save(ordering); // OrderItem:케스케이딩, Item:더티체킹
+//        save를 먼저 함으로서 위 코드에서 에러 발생 시 item 서비스가 호출되지 않으므로 트랜잭션 문제 발생하지 않음
+        String itemPatchUrl = ITEM_API + "/item/updateQuantity";
         HttpEntity<List<ItemQuantityUpdateDto>> entity = new HttpEntity<>(itemQuantityUpdateDtos);
-        ResponseEntity<CommonResponse> response = restTemplate
-                .exchange(itemPatchUrl, HttpMethod.POST, entity, CommonResponse.class);
-
-//        만약에 위 updateQuantity 이후에 추가적인 로직이 존재할 경우에 트랜잭션 이슈는 여전히 발생 가능함.
-//        해결책으로 에러 발생할 가능성이 있는 코드전체를 try catch로 예외처리 이후에 catch에서 updateRollbackQuantity 호출
-
+        ResponseEntity<CommonResponse> response =
+                restTemplate.exchange(itemPatchUrl, HttpMethod.POST, entity, CommonResponse.class);
+//        만약 위 update 이후에 추가적인 로직이 존재할 경우, 트랜잭션 이슈는 여전히 발생됨
+//        해결책으로 에러 발생할 가능성이 있는 코드전체를 try/catch로 예외처리 이후에 catch에서 updateRollbackQuantity호출
         return ordering1;
     }
+
 
 /*
 
