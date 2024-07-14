@@ -15,6 +15,16 @@ spring:
   # eureka 서버에 아래 name으로 서비스 명을 등록.
   application:
     name: order-service
+  kafka:
+    consumer:
+      bootstrap-servers: localhost:9092
+      group-id: group-01
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.LongDeserializer
+    producer:
+      bootstrap-servers: localhost:9092
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.LongSerializer
 eureka:
   client:
     servieUrl:
