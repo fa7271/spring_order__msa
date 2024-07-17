@@ -27,13 +27,17 @@ public class OrderController {
         Ordering ordering = orderService.create(orderReqDtos, email);
         return new ResponseEntity<>(new CommonResponse(HttpStatus.CREATED, "order success create", ordering.getId()), HttpStatus.CREATED);
     }
-
     @GetMapping("/orders")
     public List<OrderResDto> orderList() {
         return orderService.findAll();
     }
 
 
+//    1. 주문하기
+    @PostMapping("/order")
+    public void order(@RequestParam String productId){
+        orderService.order(productId);
+    }
 /*
     @DeleteMapping("/order/{id}/cancle")
 

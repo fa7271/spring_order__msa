@@ -117,4 +117,8 @@ public class OrderService {
         List<Ordering> orderings = orderRepository.findByMemberId(memberId);
         return orderings.stream().map(x -> OrderResDto.toDto(x)).collect(Collectors.toList());
     }
+
+    public void order(String productId) {
+
+    }
 }
